@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "phantomguard"
-version = "0.1.0"
+version = "0.2.0"
 description = "Honest backtest statistics and anti-overfitting guards: PSR, Deflated Sharpe Ratio, walk-forward, phantom detectors, and an adversarial LLM verifier."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -29,6 +29,9 @@ dependencies = [
 [project.optional-dependencies]
 llm = ["anthropic>=0.40"]
 dev = ["pytest>=7"]
+
+[project.scripts]
+phantomguard = "phantomguard.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/jonass17/phantomguard"

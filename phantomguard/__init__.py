@@ -34,9 +34,10 @@ from .walkforward import (
 from .checks import lookahead_flag, stale_value_flag, PhantomChecklist
 from .gates import Gates, DEFAULT_GATES
 from .report import evaluate, Verdict
+from .overfitting import pbo_cscv, PBOResult
 from .verify import adversarial_verify, build_prompt
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "sharpe_ratio", "annualize_sharpe", "probabilistic_sharpe_ratio",
@@ -44,5 +45,5 @@ __all__ = [
     "bootstrap_sharpe_ci", "walk_forward_splits", "purged_kfold",
     "positive_fold_fraction", "lookahead_flag", "stale_value_flag",
     "PhantomChecklist", "Gates", "DEFAULT_GATES", "evaluate", "Verdict",
-    "adversarial_verify", "build_prompt",
+    "pbo_cscv", "PBOResult", "adversarial_verify", "build_prompt",
 ]

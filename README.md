@@ -76,6 +76,40 @@ from noise once you account for the 800 trials and the bootstrap spread. (Run it
 yourself: `python examples/quickstart.py` — these are the real numbers, and the
 same script shows a clean edge passing.) That's the whole point.
 
+## Probability of Backtest Overfitting (PBO)
+
+The single most honest number for a strategy *search*. You tried N configs and
+kept the best — how likely is it that your winner is just the luckiest noise and
+will rank below median out of sample? PhantomGuard estimates it with
+Combinatorially-Symmetric Cross-Validation (no parametric assumptions):
+
+```python
+import numpy as np
+from phantomguard import pbo_cscv
+
+# rows = time, columns = every strategy/config you tried
+trials = np.random.default_rng(0).normal(0, 1, size=(2000, 50))
+res = pbo_cscv(trials, n_blocks=16)
+print(res)
+# PBO = 0.49  [LIKELY OVERFIT]  (50 trials, 16 blocks, 6435 splits)
+#   P(champion loses OOS)      = 0.50
+#   perf degradation slope     = ...
+```
+
+PBO near **0.5** means your selection process has *no* out-of-sample skill —
+exactly what pure noise produces. A genuinely persistent edge drives PBO toward
+**0**.
+
+## Command line
+
+```bash
+phantomguard check trades.csv --trials 800 --sr-trials trial_sharpes.csv -p 252
+phantomguard pbo trial_matrix.csv --blocks 16
+```
+
+`check` exits non-zero if the gates fail and `pbo` exits non-zero if PBO > 0.5 —
+so you can wire PhantomGuard straight into CI and fail the build on a phantom.
+
 ## Adversarial verification
 
 ```python
@@ -113,8 +147,10 @@ can see it.
 
 ## Status
 
-`0.1.0` — early but the core statistics are correct and tested. Issues and PRs
-welcome, especially additional phantom detectors and verifier back-ends.
+`0.2.0` — core statistics, **PBO/CSCV**, and a **CLI** are in and tested
+(20 tests). Next: HTML report, backtester adapters (vectorbt/backtrader), PyPI.
+Issues and PRs welcome, especially additional phantom detectors and verifier
+back-ends.
 
 ## License
 
