@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "phantomguard"
+version = "0.1.0"
+description = "Honest backtest statistics and anti-overfitting guards: PSR, Deflated Sharpe Ratio, walk-forward, phantom detectors, and an adversarial LLM verifier."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "jonass17" }]
+keywords = [
+    "backtesting", "overfitting", "deflated-sharpe-ratio",
+    "probabilistic-sharpe-ratio", "quant", "walk-forward", "trading",
+    "finance", "statistics", "lopez-de-prado",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Topic :: Office/Business :: Financial :: Investment",
+]
+dependencies = [
+    "numpy>=1.21",
+    "scipy>=1.7",
+]
+
+[project.optional-dependencies]
+llm = ["anthropic>=0.40"]
+dev = ["pytest>=7"]
+
+[project.urls]
+Homepage = "https://github.com/jonass17/phantomguard"
+Issues = "https://github.com/jonass17/phantomguard/issues"
+
+[tool.setuptools.packages.find]
+include = ["phantomguard*"]
