@@ -1,5 +1,7 @@
 # PhantomGuard
 
+[![tests](https://github.com/jonass17/phantomguard/actions/workflows/ci.yml/badge.svg)](https://github.com/jonass17/phantomguard/actions/workflows/ci.yml)
+
 **Honest backtest statistics and anti-overfitting guards — in one small library.**
 
 Most backtests are *phantoms*: a great-looking Sharpe ratio that survives only
