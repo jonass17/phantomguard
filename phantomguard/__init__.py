@@ -46,8 +46,9 @@ from .clustering import (
 from .concentration import concentration_check, ConcentrationResult
 from .probes import lookahead_cheat_probe, HarnessProbeResult
 from .ratios import max_drawdown, downside_deviation, sortino_ratio, calmar_ratio
+from .audit import audit, audit_csv, AuditReport
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 
 __all__ = [
     "sharpe_ratio", "annualize_sharpe", "probabilistic_sharpe_ratio",
@@ -61,4 +62,5 @@ __all__ = [
     "concentration_check", "ConcentrationResult",
     "lookahead_cheat_probe", "HarnessProbeResult",
     "max_drawdown", "downside_deviation", "sortino_ratio", "calmar_ratio",
+    "audit", "audit_csv", "AuditReport",
 ]

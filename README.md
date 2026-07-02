@@ -169,6 +169,31 @@ downside deviation; `calmar_ratio` is return per nightmare (CAGR / MaxDD).
 
 Runnable walkthroughs: `examples/cluster_demo.py`, `examples/concentration_demo.py`.
 
+## One call to run them all: `audit()` (0.4)
+
+Hand it per-trade PnL plus whatever labels you have; it runs the full
+battery and aggregates every red flag. The verdict vocabulary is honest by
+design: an audit can find guilt, never prove innocence -- the best you can
+get is "no red flags", never "the edge is real".
+
+```python
+from phantomguard import audit  # or audit_csv("trades.csv", "pnl", "entry_ts", "day")
+
+print(audit(pnl, clusters=entry_timestamps, groups=days))
+# PhantomGuard audit -- verdict: NOT ESTABLISHED
+#   trades            : 436
+#   mean PnL          : +2.94          <- looks nice...
+#   cluster 95% CI    : [-4.43, +10.40]  -> includes 0
+#   clusters          : 181/436 independent timestamps (CI widening 1.63x)
+#   red flags:
+#     ! SIGN FLIP: remove group '2026-06-28' and the mean goes -2.55
+#     ! honest CI includes zero -- not distinguishable from noise
+```
+
+Every omitted label silently disables the check that could have caught your
+phantom -- so `audit()` flags missing labels too, and never issues a clean
+bill on partial evidence.
+
 ## The gates
 
 Defaults are deliberately strict. An edge passes only if **all** hard gates clear:
@@ -193,10 +218,10 @@ can see it.
 
 ## Status
 
-`0.3.0` — core statistics, **PBO/CSCV**, a **CLI**, **cluster bootstrap**,
-**concentration check**, **look-ahead cheat probe** and **Sortino/Calmar**
-are in and tested (38 tests). Next: a one-call `audit()` over a trade list,
-HTML report, backtester adapters (vectorbt/backtrader), PyPI.
+`0.4.0` — core statistics, **PBO/CSCV**, a **CLI**, **cluster bootstrap**,
+**concentration check**, **look-ahead cheat probe**, **Sortino/Calmar** and
+the one-call **`audit()`** are in and tested (44 tests). Next: `audit` in the
+CLI, HTML report, backtester adapters (vectorbt/backtrader), PyPI.
 Issues and PRs welcome, especially additional phantom detectors and verifier
 back-ends.
 

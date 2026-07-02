@@ -100,6 +100,8 @@ def concentration_check(values, groups) -> ConcentrationResult:
 
     best_i = int(np.argmax(sums))
     best_label = uniq[best_i]
+    if hasattr(best_label, "item"):
+        best_label = best_label.item()  # plain Python type, clean repr
     best_pnl = float(sums[best_i])
     total = float(v.sum())
 
