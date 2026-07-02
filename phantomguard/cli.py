@@ -1,7 +1,8 @@
-"""Command-line interface: ``phantomguard check`` and ``phantomguard pbo``.
+"""Command-line interface: ``phantomguard check``, ``pbo`` and ``audit``.
 
     phantomguard check trades.csv --trials 800 --sr-trials trial_sharpes.csv -p 252
     phantomguard pbo trial_matrix.csv --blocks 16
+    phantomguard audit trades.csv --pnl-col pnl --ts-col entry_ts --group-col day
 
 CSV in, honest verdict out. Only numpy is required.
 """
@@ -58,6 +59,22 @@ def _cmd_pbo(args) -> int:
     return 0 if res.pbo <= 0.5 else 1
 
 
+def _cmd_audit(args) -> int:
+    from .audit import audit_csv
+
+    report = audit_csv(
+        args.file,
+        value_col=args.pnl_col,
+        cluster_col=args.ts_col,
+        group_col=args.group_col,
+        seed=args.seed,
+    )
+    print(report)
+    # Exit code contract mirrors `check`: non-zero when the edge claim dies,
+    # so `phantomguard audit` can gate a CI pipeline.
+    return 0 if report.verdict != "NOT ESTABLISHED" else 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="phantomguard",
@@ -86,6 +103,21 @@ def build_parser() -> argparse.ArgumentParser:
     b.add_argument("--blocks", type=int, default=16,
                    help="number of CSCV blocks S, even (default 16)")
     b.set_defaults(func=_cmd_pbo)
+
+    a = sub.add_parser(
+        "audit",
+        help="run the full red-flag battery over a trade list (cluster "
+             "bootstrap, concentration, ratios)")
+    a.add_argument("file", help="CSV with one row per trade (needs a header)")
+    a.add_argument("--pnl-col", required=True,
+                   help="name of the per-trade PnL column")
+    a.add_argument("--ts-col", default=None,
+                   help="entry-timestamp column: enables the cluster bootstrap "
+                        "(strongly recommended -- co-firing trades fake significance)")
+    a.add_argument("--group-col", default=None,
+                   help="day/market column: enables the concentration check")
+    a.add_argument("--seed", type=int, default=0, help="bootstrap seed (default 0)")
+    a.set_defaults(func=_cmd_audit)
     return p
 
 
