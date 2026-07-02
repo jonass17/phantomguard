@@ -129,8 +129,16 @@ def audit(values, clusters=None, groups=None, n_boot: int = 10000,
     # --- concentration ---------------------------------------------------
     conc = None
     if groups is not None:
-        conc = concentration_check(values, groups)
-        flags += conc.notes
+        distinct = len(set(np.asarray(groups).ravel().tolist()))
+        if distinct >= 2:
+            conc = concentration_check(values, groups)
+            flags += conc.notes
+        else:
+            flags.append(
+                "all trades fall into a single group (e.g. one day) -- "
+                "concentration is untestable; the sample cannot establish "
+                "an edge across regimes"
+            )
     else:
         flags.append(
             "no group labels (days/markets) supplied -- one-day-wonder "

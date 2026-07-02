@@ -66,3 +66,11 @@ def test_audit_csv_missing_column(tmp_path):
     p.write_text("a,b\n1,2\n", encoding="utf-8")
     with pytest.raises(ValueError):
         audit_csv(p, "pnl")
+
+
+def test_single_group_does_not_crash():
+    rng = np.random.default_rng(6)
+    v = rng.normal(0.1, 1.0, 50)
+    r = audit(v, clusters=np.arange(50), groups=["d1"] * 50)
+    assert r.concentration is None
+    assert any("single group" in f for f in r.flags)
