@@ -36,8 +36,18 @@ from .gates import Gates, DEFAULT_GATES
 from .report import evaluate, Verdict
 from .overfitting import pbo_cscv, PBOResult
 from .verify import adversarial_verify, build_prompt
+from .clustering import (
+    cluster_bootstrap_ci,
+    iid_bootstrap_ci,
+    diagnose_clustering,
+    ClusterDiagnosis,
+    effective_clusters,
+)
+from .concentration import concentration_check, ConcentrationResult
+from .probes import lookahead_cheat_probe, HarnessProbeResult
+from .ratios import max_drawdown, downside_deviation, sortino_ratio, calmar_ratio
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 __all__ = [
     "sharpe_ratio", "annualize_sharpe", "probabilistic_sharpe_ratio",
@@ -46,4 +56,9 @@ __all__ = [
     "positive_fold_fraction", "lookahead_flag", "stale_value_flag",
     "PhantomChecklist", "Gates", "DEFAULT_GATES", "evaluate", "Verdict",
     "pbo_cscv", "PBOResult", "adversarial_verify", "build_prompt",
+    "cluster_bootstrap_ci", "iid_bootstrap_ci", "diagnose_clustering",
+    "ClusterDiagnosis", "effective_clusters",
+    "concentration_check", "ConcentrationResult",
+    "lookahead_cheat_probe", "HarnessProbeResult",
+    "max_drawdown", "downside_deviation", "sortino_ratio", "calmar_ratio",
 ]

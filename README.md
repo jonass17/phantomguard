@@ -123,6 +123,52 @@ result = adversarial_verify(verdict, model="claude-sonnet-4-6")
 print(result["verdict"], result["attacks"])
 ```
 
+## New in 0.3: dependence, concentration, harness probes, more ratios
+
+Four checks that catch what significance tests alone miss — each one distilled
+from a real phantom autopsy:
+
+**Cluster bootstrap** — your backtest says n=600 trades, but if one signal
+fires across 5 correlated assets at the same timestamp, there are only 120
+independent pieces of information. The IID bootstrap CI is then too narrow and
+fakes significance:
+
+```python
+from phantomguard import diagnose_clustering
+print(diagnose_clustering(pnl, entry_timestamps))
+# widening factor 2.27x
+# ! IID CI is anti-conservative ... do not base a significance claim on it
+# ! SIGNIFICANCE FLIP: IID CI excludes 0 but the cluster CI does not
+```
+
+**Concentration check** — remove the single best day (or market, or event)
+and see what is left. A strategy whose entire profit is one group's story is
+an anecdote, not an edge. (Longshot strategies flag by design — see the
+docstring for the honest interpretation.)
+
+```python
+from phantomguard import concentration_check
+print(concentration_check(pnl, days))
+# ! SIGN FLIP: remove group '2026-06-28' and the mean goes -0.118
+```
+
+**Look-ahead cheat probe** — wire an intentional crime into your pipeline
+(the signal peeks one bar ahead) and demand the result EXPLODES. If it
+doesn't, your harness is broken and every number it produced is void. The
+smoke-detector test, with real smoke:
+
+```python
+from phantomguard import lookahead_cheat_probe
+r = lookahead_cheat_probe(run_backtest)   # run_backtest(shift) -> metric
+# harness ok: True   (leak +42.4 vs base +2.9 -- wiring proven correct)
+```
+
+**Sortino / Calmar / max drawdown** — Sharpe punishes upside volatility too,
+which is unfair to positively-skewed strategies. `sortino_ratio` counts only
+downside deviation; `calmar_ratio` is return per nightmare (CAGR / MaxDD).
+
+Runnable walkthroughs: `examples/cluster_demo.py`, `examples/concentration_demo.py`.
+
 ## The gates
 
 Defaults are deliberately strict. An edge passes only if **all** hard gates clear:
@@ -147,8 +193,10 @@ can see it.
 
 ## Status
 
-`0.2.0` — core statistics, **PBO/CSCV**, and a **CLI** are in and tested
-(20 tests). Next: HTML report, backtester adapters (vectorbt/backtrader), PyPI.
+`0.3.0` — core statistics, **PBO/CSCV**, a **CLI**, **cluster bootstrap**,
+**concentration check**, **look-ahead cheat probe** and **Sortino/Calmar**
+are in and tested (38 tests). Next: a one-call `audit()` over a trade list,
+HTML report, backtester adapters (vectorbt/backtrader), PyPI.
 Issues and PRs welcome, especially additional phantom detectors and verifier
 back-ends.
 
