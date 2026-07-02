@@ -169,6 +169,15 @@ r = lookahead_cheat_probe(run_backtest)   # run_backtest(shift) -> metric
 which is unfair to positively-skewed strategies. `sortino_ratio` counts only
 downside deviation; `calmar_ratio` is return per nightmare (CAGR / MaxDD).
 
+**Decay check (0.5)** — the most common life cycle of a doomed edge: it existed,
+it is fading, and you deploy into the corpse. `decay_check` splits the sample
+into early/late halves and measures the time trend; the late half is the only
+part that forecasts tomorrow.
+
+**Cost ladder (0.5)** — `cost_ladder(pnl, costs=[0, 0.5, 1, 2])` recomputes the
+(cluster-honest) CI under increasing per-trade costs and reports your
+break-even cost. Compare it with your REAL spread+slippage+fees.
+
 Runnable walkthroughs: `examples/cluster_demo.py`, `examples/concentration_demo.py`.
 
 ## One call to run them all: `audit()` (0.4)
@@ -220,10 +229,11 @@ can see it.
 
 ## Status
 
-`0.4.0` — core statistics, **PBO/CSCV**, a **CLI**, **cluster bootstrap**,
-**concentration check**, **look-ahead cheat probe**, **Sortino/Calmar** and
-the one-call **`audit()`** are in and tested (44 tests). Next: `audit` in the
-CLI, HTML report, backtester adapters (vectorbt/backtrader), PyPI.
+`0.5.0` — core statistics, **PBO/CSCV**, a **CLI** (`check` / `pbo` / `audit`),
+**cluster bootstrap**, **concentration check**, **decay check**, **cost ladder**,
+**look-ahead cheat probe**, **Sortino/Calmar** and the one-call **`audit()`**
+are in and tested (51 tests, CI on Linux+Windows). Next: HTML report,
+backtester adapters (vectorbt/backtrader), PyPI.
 Issues and PRs welcome, especially additional phantom detectors and verifier
 back-ends.
 

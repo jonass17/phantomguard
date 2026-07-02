@@ -47,8 +47,9 @@ from .concentration import concentration_check, ConcentrationResult
 from .probes import lookahead_cheat_probe, HarnessProbeResult
 from .ratios import max_drawdown, downside_deviation, sortino_ratio, calmar_ratio
 from .audit import audit, audit_csv, AuditReport
+from .decay import decay_check, DecayResult, cost_ladder, CostLadderResult
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 
 __all__ = [
     "sharpe_ratio", "annualize_sharpe", "probabilistic_sharpe_ratio",
@@ -63,4 +64,5 @@ __all__ = [
     "lookahead_cheat_probe", "HarnessProbeResult",
     "max_drawdown", "downside_deviation", "sortino_ratio", "calmar_ratio",
     "audit", "audit_csv", "AuditReport",
+    "decay_check", "DecayResult", "cost_ladder", "CostLadderResult",
 ]

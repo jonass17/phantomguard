@@ -26,6 +26,7 @@ import numpy as np
 
 from .clustering import diagnose_clustering, iid_bootstrap_ci, ClusterDiagnosis
 from .concentration import concentration_check, ConcentrationResult
+from .decay import decay_check, DecayResult
 from .ratios import max_drawdown, sortino_ratio
 
 
@@ -39,6 +40,7 @@ class AuditReport:
     significant: bool              # honest CI excludes zero
     clustering: ClusterDiagnosis | None
     concentration: ConcentrationResult | None
+    decay: DecayResult | None
     sortino: float
     max_drawdown_additive: float
     flags: list[str] = field(default_factory=list)
@@ -67,6 +69,11 @@ class AuditReport:
             lines.append(
                 f"  concentration     : best group {c.best_group!r} carries"
                 f" {share}; ex-best mean {c.mean_ex_best:+.4g}"
+            )
+        if self.decay is not None:
+            lines.append(
+                f"  decay             : early {self.decay.mean_early:+.4g} -> "
+                f"late {self.decay.mean_late:+.4g} (trend rho {self.decay.spearman_rho:+.2f})"
             )
         if self.flags:
             lines.append("")
@@ -130,6 +137,19 @@ def audit(values, clusters=None, groups=None, n_boot: int = 10000,
             "concentration cannot be checked"
         )
 
+    # --- decay -----------------------------------------------------------
+    dec = None
+    if v.size >= 10:
+        # clusters (entry timestamps) double as the chronological order; without
+        # them we assume the caller passed trades oldest-first.
+        dec = decay_check(values if clusters is None else values,
+                          order=clusters if clusters is not None else None)
+        flags += dec.notes
+        if clusters is None:
+            flags.append(
+                "decay check assumed chronological input order (no timestamps given)"
+            )
+
     # --- verdict ---------------------------------------------------------
     mean = float(v.mean())
     killed = (not significant) or mean <= 0 or (conc is not None and conc.sign_flip)
@@ -152,6 +172,7 @@ def audit(values, clusters=None, groups=None, n_boot: int = 10000,
         significant=bool(significant),
         clustering=clu,
         concentration=conc,
+        decay=dec,
         sortino=float(sortino_ratio(v)),
         max_drawdown_additive=float(max_drawdown(v, compound=False)),
         flags=flags,
