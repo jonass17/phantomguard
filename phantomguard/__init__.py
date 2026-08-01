@@ -48,8 +48,14 @@ from .probes import lookahead_cheat_probe, HarnessProbeResult
 from .ratios import max_drawdown, downside_deviation, sortino_ratio, calmar_ratio
 from .audit import audit, audit_csv, AuditReport
 from .decay import decay_check, DecayResult, cost_ladder, CostLadderResult
+from .oracle import (
+    oracle_control,
+    OracleControlResult,
+    oracle_probe,
+    OracleProbeResult,
+)
 
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 
 __all__ = [
     "sharpe_ratio", "annualize_sharpe", "probabilistic_sharpe_ratio",
@@ -65,4 +71,6 @@ __all__ = [
     "max_drawdown", "downside_deviation", "sortino_ratio", "calmar_ratio",
     "audit", "audit_csv", "AuditReport",
     "decay_check", "DecayResult", "cost_ladder", "CostLadderResult",
+    "oracle_control", "OracleControlResult",
+    "oracle_probe", "OracleProbeResult",
 ]

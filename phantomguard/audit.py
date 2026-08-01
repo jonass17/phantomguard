@@ -27,6 +27,7 @@ import numpy as np
 from .clustering import diagnose_clustering, iid_bootstrap_ci, ClusterDiagnosis
 from .concentration import concentration_check, ConcentrationResult
 from .decay import decay_check, DecayResult
+from .oracle import OracleControlResult
 from .ratios import max_drawdown, sortino_ratio
 
 
@@ -45,6 +46,7 @@ class AuditReport:
     max_drawdown_additive: float
     flags: list[str] = field(default_factory=list)
     verdict: str = ""
+    oracle: OracleControlResult | None = None  # power probe (see oracle_control)
 
     def __str__(self) -> str:
         lines = [
@@ -75,6 +77,21 @@ class AuditReport:
                 f"  decay             : early {self.decay.mean_early:+.4g} -> "
                 f"late {self.decay.mean_late:+.4g} (trend rho {self.decay.spearman_rho:+.2f})"
             )
+        if self.oracle is not None:
+            o = self.oracle
+            lines.append(
+                f"  oracle control    : injected edge {o.claimed_effect:+.4g}/trade -> "
+                f"{'DETECTED' if o.powered else 'NOT DETECTED'} "
+                f"(MDE {o.mde:.4g}, margin {o.margin:.2f}x)"
+            )
+        elif self.verdict == "NOT ESTABLISHED":
+            lines.append(
+                "  oracle control    : not run -- a negative without a power proof"
+            )
+            lines.append(
+                "                      is not a finding; rerun with"
+                " audit(..., oracle=<claimed effect/trade>)"
+            )
         if self.flags:
             lines.append("")
             lines.append("  red flags:")
@@ -87,7 +104,8 @@ class AuditReport:
 
 
 def audit(values, clusters=None, groups=None, n_boot: int = 10000,
-          alpha: float = 0.05, seed: int = 0) -> AuditReport:
+          alpha: float = 0.05, seed: int = 0,
+          oracle: float | None = None) -> AuditReport:
     """Run every applicable check over per-trade PnL.
 
     Parameters
@@ -100,6 +118,13 @@ def audit(values, clusters=None, groups=None, n_boot: int = 10000,
     groups : array-like, optional
         Day / market / event label per trade. Enables the concentration
         check. Passing calendar days is the recommended minimum.
+    oracle : float, optional
+        The mean PnL/trade a REAL edge of the claimed size would produce.
+        Runs :func:`phantomguard.oracle_control` alongside the audit: a
+        synthetic edge of this size is injected into a copy and must be
+        detected. A negative verdict without this power proof is not a
+        finding -- it may simply mean the sample could never have detected
+        anything (the phantom NEGATIVE).
 
     Give it everything you have: every omitted label silently disables the
     check that could have caught your phantom.
@@ -172,6 +197,19 @@ def audit(values, clusters=None, groups=None, n_boot: int = 10000,
     else:
         verdict = "NO RED FLAGS"
 
+    # --- oracle power control (opt-in) ------------------------------------
+    ora = None
+    if oracle is not None:
+        from .oracle import oracle_control  # lazy: oracle_control() calls audit()
+        ora = oracle_control(values, oracle, clusters=clusters, groups=groups,
+                             n_boot=n_boot, alpha=alpha, seed=seed)
+        if verdict == "NOT ESTABLISHED" and not ora.powered:
+            flags.append(
+                f"UNPOWERED NEGATIVE: an injected TRUE edge of {oracle:+.4g}/trade "
+                f"would not be detected at this n/clustering (MDE {ora.mde:.4g}) "
+                f"-- this negative is a power artifact, not a finding"
+            )
+
     return AuditReport(
         n_obs=int(v.size),
         mean=float(v.mean()),
@@ -185,6 +223,7 @@ def audit(values, clusters=None, groups=None, n_boot: int = 10000,
         max_drawdown_additive=float(max_drawdown(v, compound=False)),
         flags=flags,
         verdict=verdict,
+        oracle=ora,
     )
 
 

@@ -180,6 +180,68 @@ break-even cost. Compare it with your REAL spread+slippage+fees.
 
 Runnable walkthroughs: `examples/cluster_demo.py`, `examples/concentration_demo.py`.
 
+## New in 0.6: the oracle control — a negative without a power proof is not a finding
+
+Everything above guards against the phantom **positive**. This release guards
+against the opposite failure, the phantom **negative**: a pipeline so weak it
+could never have detected a real edge — so its "nothing here" is a statement
+about the pipeline, not about the market. The two failure modes need two
+different controls:
+
+| Control | Injects | Demands | Catches |
+|---------|---------|---------|---------|
+| `lookahead_cheat_probe` | a crime (future peek) | explosion | broken wiring that would **fake a positive** |
+| `oracle_control` / `oracle_probe` | the answer | near-perfect detection | a setup too weak to produce a **real negative** |
+
+**`oracle_control`** — for trade lists. Same inputs as `audit()` plus the mean
+PnL/trade a real edge would produce. It injects that edge synthetically (the
+sample keeps its real noise, tails and clustering; only the true mean changes)
+and runs the exact same honest audit path on the copy. It also reports the
+**MDE** — the minimal detectable effect at this n and clustering:
+
+```python
+from phantomguard import audit, oracle_control
+
+print(oracle_control(pnl, claimed_effect=0.8, clusters=entry_ts, groups=days))
+# OracleControl (synthetic-edge power probe)
+#   observations      : 7531  (725 clusters)
+#   claimed effect    : +0.8 per trade
+#   injected cluster CI : [+0.48, +1.12]  -> DETECTED
+#   MDE (this sample) : 0.319 per trade
+#   power margin      : 2.51x
+#   powered           : True
+
+# or in one call -- audit() flags an UNPOWERED NEGATIVE automatically:
+print(audit(pnl, clusters=entry_ts, groups=days, oracle=0.8))
+```
+
+Real-world use: a forensic re-audit of a prediction-market scanner. The trade
+list audited hard negative — and that verdict was only *meaningful* because an
+injected synthetic edge of the claimed size WAS detected on the same data
+(powered, with 2.5x margin). Without that control, "no edge" and "this sample
+couldn't tell" are indistinguishable.
+
+**`oracle_probe`** — for model pipelines. Hand it your pipeline exactly as
+configured (`fit_score(X, y) -> scores`); it appends the **target itself as a
+feature** and demands a near-perfect score (default: AUC >= 0.95 for binary
+targets, Spearman for continuous):
+
+```python
+from phantomguard import oracle_probe
+
+r = oracle_probe(fit_score, X, y)
+# powered=False -> the pipeline cannot see its OWN TARGET; every negative void
+```
+
+This catches a failure the cheat probe never can: a tree model whose
+`min_child_samples` exceeds the positive count of a rare target reaches only
+AUC ~0.57 *with the answer as a feature* — it structurally cannot split, and
+every negative it ever produced was void. `oracle_probe` flags rare targets
+(< 50 positives or < 2% base rate) explicitly.
+
+On the CLI: `phantomguard audit trades.csv --pnl-col pnl --ts-col entry_ts
+--oracle 0.8`. Walkthrough: `examples/oracle_demo.py`.
+
 ## One call to run them all: `audit()` (0.4)
 
 Hand it per-trade PnL plus whatever labels you have; it runs the full
@@ -229,11 +291,13 @@ can see it.
 
 ## Status
 
-`0.5.0` — core statistics, **PBO/CSCV**, a **CLI** (`check` / `pbo` / `audit`),
+`0.6.0` — core statistics, **PBO/CSCV**, a **CLI** (`check` / `pbo` / `audit`),
 **cluster bootstrap**, **concentration check**, **decay check**, **cost ladder**,
-**look-ahead cheat probe**, **Sortino/Calmar** and the one-call **`audit()`**
-are in and tested (51 tests, CI on Linux+Windows). Next: HTML report,
-backtester adapters (vectorbt/backtrader), PyPI.
+**look-ahead cheat probe**, **oracle controls** (`oracle_control` /
+`oracle_probe` — power proofs against phantom negatives), **Sortino/Calmar**
+and the one-call **`audit()`** are in and tested (66 tests, CI on
+Linux+Windows). Next: HTML report, backtester adapters (vectorbt/backtrader),
+PyPI.
 Issues and PRs welcome, especially additional phantom detectors and verifier
 back-ends.
 

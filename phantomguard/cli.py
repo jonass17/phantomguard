@@ -3,6 +3,7 @@
     phantomguard check trades.csv --trials 800 --sr-trials trial_sharpes.csv -p 252
     phantomguard pbo trial_matrix.csv --blocks 16
     phantomguard audit trades.csv --pnl-col pnl --ts-col entry_ts --group-col day
+    phantomguard audit trades.csv --pnl-col pnl --ts-col entry_ts --oracle 0.8
 
 CSV in, honest verdict out. Only numpy is required.
 """
@@ -68,8 +69,12 @@ def _cmd_audit(args) -> int:
         cluster_col=args.ts_col,
         group_col=args.group_col,
         seed=args.seed,
+        oracle=args.oracle,
     )
     print(report)
+    if report.oracle is not None:
+        print()
+        print(report.oracle)
     # Exit code contract mirrors `check`: non-zero when the edge claim dies,
     # so `phantomguard audit` can gate a CI pipeline.
     return 0 if report.verdict != "NOT ESTABLISHED" else 1
@@ -117,6 +122,10 @@ def build_parser() -> argparse.ArgumentParser:
     a.add_argument("--group-col", default=None,
                    help="day/market column: enables the concentration check")
     a.add_argument("--seed", type=int, default=0, help="bootstrap seed (default 0)")
+    a.add_argument("--oracle", type=float, default=None, metavar="EFFECT",
+                   help="claimed mean PnL/trade: injects a synthetic edge of "
+                        "this size and checks the audit would detect it "
+                        "(power control -- a negative without it is not a finding)")
     a.set_defaults(func=_cmd_audit)
     return p
 
